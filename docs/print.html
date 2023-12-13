@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">introduction</a></li><li class="chapter-item expanded "><a href="podio/index.html"><strong aria-hidden="true">1.</strong> Podio</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="podio/index.html"><strong aria-hidden="true">1.</strong> Podio</a></li><li class="chapter-item expanded "><a href="procfu/json_data.html"><strong aria-hidden="true">2.</strong> Fetching JSON Data</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -171,6 +171,45 @@
 <p>These are my collected notes on various technologies that I am using.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="podio"><a class="header" href="#podio">Podio</a></h1>
 <p>My notes on Podio development.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="fetching-json-data"><a class="header" href="#fetching-json-data">Fetching JSON Data</a></h1>
+<p>In the header create a span element with an id. This is where the JSON data will saved 
+so that it can be used in On Render code event.</p>
+<pre><code class="language-html">&lt;span id=&quot;guestslist&quot; style=&quot;display: none&quot;&gt;@[pf_custom:guestslist]&lt;/span&gt;
+</code></pre>
+<pre><code class="language-javascript">if(custom_tokens.refreshguests) {
+	let weddingpid = auth_item_values[&quot;piid-weddings&quot;]
+	let filters = {filters: {&quot;249160737&quot;: [intval(weddingpid)]}, &quot;limit&quot;: 500, &quot;sort_by&quot;:253711910, &quot;sort_desc&quot;:false}
+	let response = podio_api_raw_curl(&quot;/item/app/28364902/filter/&quot;, &quot;POST&quot;, {}, filters)
+	let items = response[&quot;items&quot;]
+	let guests = []
+    
+	foreach(items as item) {
+	  let guest = {&quot;pid&quot;: item[&quot;item_id&quot;]}
+	  foreach(item[&quot;fields&quot;] as field) {
+		  if(field[&quot;external_id&quot;] == &quot;full-name&quot;) {
+			  guest[&quot;full-name&quot;] = field[&quot;values&quot;][0][&quot;value&quot;]
+		  }
+		  if(field[&quot;external_id&quot;] == &quot;guest-type-short&quot;) {
+			  guest[&quot;guest-type-short&quot;] = field[&quot;values&quot;][0][&quot;value&quot;]
+		  }
+		  if(field[&quot;external_id&quot;] == &quot;guest-age-bracket&quot;) {
+			  guest[&quot;guest-type&quot;] = field[&quot;values&quot;][0][&quot;value&quot;][&quot;text&quot;]
+		  }
+		  if(field[&quot;external_id&quot;] == &quot;table-number&quot;) {
+			  guest[&quot;table-number&quot;] = field[&quot;values&quot;][0][&quot;value&quot;][&quot;text&quot;]
+		  }
+		  if(field[&quot;external_id&quot;] == &quot;allergy&quot;) {
+			  guest[&quot;allergy&quot;] = field[&quot;values&quot;][0][&quot;value&quot;][&quot;text&quot;]
+		  }
+	  }
+
+	  array_push(guests, guest)
+	}
+
+	custom_tokens.guestslist = json_encode(guests)
+	custom_tokens.refreshguests = false
+}
+</code></pre>
 
                     </main>
 
@@ -189,6 +228,22 @@
 
         </div>
 
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
 
 
 
